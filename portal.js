@@ -18,7 +18,7 @@ router.post('/salvaUsuario', async (req, res) => {
     //verifica se o usuario ja existe cadastrado
     const usuarioExistente = await Usuario.findOne({ token: usuario.token })
     if (usuarioExistente) {
-      res.status(204).json({ message: 'Usuário já cadastrado com esse token' })
+      res.status(202).json({ message: 'Usuário já cadastrado com esse token' })
     }
     else {
       //const usuarioSalo = await Usuario.find().pretty()
@@ -53,7 +53,7 @@ router.get('/buscaLancamentos', async (req, res) => {
     if (lancamentos.length > 0) {
       res.status(200).json(lancamentos);
     } else {
-      res.status(204).json({ message: 'Lançamentos ja estão atualizados' });
+      res.status(202).json({ message: 'Lançamentos ja estão atualizados' });
     }
   } catch (error) {
     res.status(500).json({ message: 'Erro ao listar os lançamentos' + error });
