@@ -17,7 +17,9 @@ app.post('/salvaUsuario',portal)
 
 app.get('/', portal)
 
+
 erpFunction()
+//setInterval(erpFunction, 30 * 1000)
 
 
 
