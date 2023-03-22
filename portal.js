@@ -11,14 +11,14 @@ router.post('/salvaUsuario', async (req, res) => {
   //verifica se os dados nao estao vazios
   if (!req.headers.user || !req.headers.app || !req.headers.token ||
     !req.headers.id_empresa) {
-    res.status(400).json({ message: 'Existe algum campo vazio! ' })
+    res.status(200).json({ message: 'Existe algum campo vazio! ' })
   }
   //tenta salvar o usuario
   try {
     //verifica se o usuario ja existe cadastrado
     const usuarioExistente = await Usuario.findOne({ token: usuario.token })
     if (usuarioExistente) {
-      res.status(400).json({ message: 'Usuário já cadastrado com esse token' })
+      res.status(200).json({ message: 'Usuário já cadastrado com esse token' })
     }
     else {
       //const usuarioSalo = await Usuario.find().pretty()
