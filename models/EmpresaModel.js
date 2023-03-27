@@ -1,10 +1,10 @@
 const mongoose = require('mongoose')
 
-const Usuario = mongoose.model('Usuario', {
+const Empresa = mongoose.model('Empresa', {
     user: String,
     app: String,
     token: String,
     id_empresa: String,
 })
 
-module.exports = Usuario
+module.exports = Empresa

@@ -1,6 +1,6 @@
 // cria a funçao que bsuca os lançamentos no erp de 10 em 10 min
 //importações
-const Usuario = require('./models/Usuario');
+const Usuario = require('./models/EmpresaModel');
 const axios = require('axios');
 const mongoose = require('mongoose');
 const LancamentoModel = require('./models/LancamentoModel');

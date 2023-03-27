@@ -1,10 +1,10 @@
 //importações
 const express = require('express')
 const mongoose = require('mongoose')
-const Usuario = require('./models/Usuario')
+//const Usuario = require('./models/Usuario')
 const app = express()
 const portal = require('./portal')
-const erpFunction = require('./erp')
+//const erpFunction = require('./erp')
 
 
 //fazer o app ler arquivos json
@@ -12,19 +12,13 @@ app.use(express.urlencoded({ extended: true }))
 app.use(express.json())
 
 // ------------------------------CHAMA ROTA DO PORTAL----------------------------------------------------------------
-app.post('/salvaUsuario',portal)
-
 
 app.get('/', portal)
 
-
-erpFunction()
+//erpFunction()
+//app.post('/salvaUsuario',portal)
 //setInterval(erpFunction, 30 * 1000)
-
-
-
-
-app.get('/buscaLancamentos', portal)
+//app.get('/buscaLancamentos', portal)
 
 //-----------------------CONEXAO COM O BANCO DE DADOS MONGODB----------------------------------------
 //entregar uma porta para o servidor e conectar ao banco de dados
