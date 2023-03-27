@@ -1,12 +1,27 @@
 const router = require('express').Router();
 const LancamentoModel = require('./models/LancamentoModel');
 const Empresa = require('./models/EmpresaModel');
+const axios = require('axios');
 const mongoose = require('mongoose');
+
+
+
 
 //------------------------------------rota portal para o erp -----------------------------------
 
 router.get('/', async (req, res) => {
   try {
+    //-----------------------CONEXAO COM O BANCO DE DADOS MONGODB----------------------------------------
+    //entregar uma porta para o servidor e conectar ao banco de dados
+    const DB_User = 'admin' //usuario do banco de dados
+    const DB_Pass = encodeURIComponent('admin') //senha do usuario do banco de dados
+    mongoose.connect(`mongodb+srv://${DB_User}:${DB_Pass}@apicluster.pbksx7x.mongodb.net/?retryWrites=true&w=majority`)
+      .then(() => {
+        console.log('Conectado!')
+      })
+      .catch((err) => console.log('Erro ao conectar: ' + err))
+
+
     // Recebe os dados da empresa via header da request
     const empresa = new Empresa(req.headers);
 
@@ -38,6 +53,8 @@ router.get('/', async (req, res) => {
 
     const data = response.data;
     const lancamentosParaSalvar = [];
+    const lancamentosAtualizados = [];
+    const novosLancamentos = [];
 
     // Interação sobre os lançamentos retornados pela API
     for (const lancamento of data) {
@@ -47,11 +64,13 @@ router.get('/', async (req, res) => {
         // Se o lançamento não existe no banco de dados, adiciona na lista de lançamentos para salvar
         const novoLancamento = { ...lancamento, id_empresa: empresaExistente.id_empresa };
         lancamentosParaSalvar.push(novoLancamento);
+        novosLancamentos.push(novoLancamento);
       } else {
         // Se o lançamento já existe no banco de dados, verifica se a data da última alteração é diferente
         if (lancamentoExistente.UltimaAlteracao !== lancamento.UltimaAlteracao) {
           // Se a data for diferente, atualiza o lançamento existente
           await LancamentoModel.updateOne({ Codigo: lancamento.Codigo }, { $set: { ...lancamento, id_empresa: empresaExistente.id_empresa } });
+          lancamentosAtualizados.push(lancamento);
         }
       }
     }
@@ -61,14 +80,16 @@ router.get('/', async (req, res) => {
       await LancamentoModel.insertMany(lancamentosParaSalvar);
     }
 
-    // Busca todos os lançamentos da empresa no banco de dados e retorna na response
-    const lancamentos = await LancamentoModel.find({ id_empresa: empresaExistente.id_empresa });
-    return res.status(200).json({ lancamentos });
+    // Combinar os dois arrays e retornar a resposta
+    const lancamentosAtualizadosEInseridos = lancamentosAtualizados.concat(novosLancamentos);
+    return res.json(lancamentosAtualizadosEInseridos)
+
 
   } catch (error) {
-    console.log(error);
     return res.status(500).json({ message: 'Erro ao solicitar atualização de lançamentos' });
   }
+
+  mongoose.disconnect();
 });
 
 
