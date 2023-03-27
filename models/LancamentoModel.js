@@ -19,8 +19,7 @@ const ParcelaLancamento = new mongoose.Schema({
   ValorPago: Number
 });
 
-const Lancamento = new mongoose.Schema({
-  id_empresa: String,
+const LancamentoERP = new mongoose.Schema({
   Codigo: Number,
   UltimaAlteracao: String,
   DataCompetencia: String,
@@ -52,6 +51,13 @@ const Lancamento = new mongoose.Schema({
   MultaPagamentos: Number
 });
 
+
+const Lancamento = new mongoose.Schema({
+  id_empresa: String,
+  data: Object = LancamentoERP,
+
+
+})
 const LancamentoModel = mongoose.model('Lancamento', Lancamento);
 
 module.exports = LancamentoModel;
