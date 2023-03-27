@@ -19,7 +19,7 @@ const ParcelaLancamento = new mongoose.Schema({
   ValorPago: Number
 });
 
-const Lancamento = new mongoose.Schema({
+const LancamentoERP = new mongoose.Schema({
   Codigo: Number,
   UltimaAlteracao: String,
   DataCompetencia: String,
@@ -52,7 +52,7 @@ const Lancamento = new mongoose.Schema({
 });
 
 
-const Lancamento1 = new mongoose.Schema({
+const Lancamento = new mongoose.Schema({
   id_empresa: String,
   data: LancamentoERP,
 
