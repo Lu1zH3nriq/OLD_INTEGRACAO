@@ -40,13 +40,13 @@ router.get('/', async (req, res) => {
 })
 
 
-router.get('/buscaLancamentos', async (req, res) => {
+/*router.get('/buscaLancamentos', async (req, res) => {
   const cod_ult_lanc = req.headers.cod_ult_lanc;
   const DB_User = 'admin'; // usuário do banco de dados
   const DB_Pass = encodeURIComponent('admin'); // senha do usuário do banco de dados
 
   mongoose.connect(`mongodb+srv://${DB_User}:${DB_Pass}@apicluster.pbksx7x.mongodb.net/?retryWrites=true&w=majority`);
-
+  
   try {
     const lancamentos = await LancamentoModel.find({ id_empresa: req.headers.id_empresa, Codigo: { $gt: cod_ult_lanc } }).sort({ codigo: 'asc' });
 
@@ -54,6 +54,27 @@ router.get('/buscaLancamentos', async (req, res) => {
       res.status(200).json(lancamentos);
     } else {
       res.status(202).json({ message: 'Lançamentos ja estão atualizados' });
+    }
+  } catch (error) {
+    res.status(500).json({ message: 'Erro ao listar os lançamentos' + error });
+  }
+});
+*/
+
+
+router.get('/buscaLancamentos', async (req, res) => {
+  const DB_User = 'admin'; // usuário do banco de dados
+  const DB_Pass = encodeURIComponent('admin'); // senha do usuário do banco de dados
+
+  mongoose.connect(`mongodb+srv://${DB_User}:${DB_Pass}@apicluster.pbksx7x.mongodb.net/?retryWrites=true&w=majority`);
+  
+  try {
+    const lancamentos = await LancamentoModel.find({ id_empresa: req.headers.id_empresa }).sort({ codigo: 'asc' });
+
+    if (lancamentos.length > 0) {
+      res.status(200).json(lancamentos);
+    } else {
+      res.status(202).json({ message: 'Não foram encontrados lançamentos' });
     }
   } catch (error) {
     res.status(500).json({ message: 'Erro ao listar os lançamentos' + error });
