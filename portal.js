@@ -5,7 +5,7 @@ const mongoose = require('mongoose');
 
 //------------------------------------rota portal para o erp -----------------------------------
 
-router.post('/', async (req, res) => {
+router.get('/', async (req, res) => {
   //recebe os dados do usuario/empresa via header da request
   const empresa = new Empresa(req.headers)
   //verifica se os dados nao estao vazios
