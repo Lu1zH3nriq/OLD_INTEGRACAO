@@ -54,8 +54,7 @@ const LancamentoERP = new mongoose.Schema({
 
 const Lancamento = new mongoose.Schema({
   id_empresa: String,
-  data: Object = LancamentoERP,
-
+  data: LancamentoERP,
 
 })
 const LancamentoModel = mongoose.model('Lancamento', Lancamento);
