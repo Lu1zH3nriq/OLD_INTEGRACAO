@@ -18,11 +18,11 @@ router.get('/', async (req, res) => {
     //verifica se o usuario ja existe cadastrado
     const empresaExistente = await Empresa.findOne({ token: empresa.token })
     if (empresaExistente) {
-      console.log('empresa ja cadastrada!')
+      res.status(202).json({ message: 'usuario ja cadastrado com este token!' })
     }
     else {
       await Empresa.create(empresa)
-      console.log('empresa cadastrada!')
+      res.status(200).json({ message: 'empresa cadastrada com sucesso!' })
     }
     try {
       const response = await axios.get('https://contaupcontabilidade.vendaerp.com.br/api/request/Lancamentos/GetAll', {
@@ -35,7 +35,7 @@ router.get('/', async (req, res) => {
       });
 
       if (response.status != 200) {
-        console.log('Erro ao requisitar a API do ERP');
+        res.status(202).json({message: 'erro ao solicitar api do erp'})
       }
 
       const data = response.data;
@@ -71,37 +71,5 @@ router.get('/', async (req, res) => {
     res.status(500).json({ message: 'Erro solicitar atualização de lançamentos ' + error })
   }
 })
-
-/*router.get('/', async (req, res) => {
-  try {
-    const usuarios = await Usuario.find()
-    res.status(200).json(usuarios)
-  } catch (error) {
-    res.status(500).json({ message: 'Erro ao listar os usuarios' + error })
-  }
-})
-*/
-
-
-router.get('/buscaLancamentos', async (req, res) => {
-  const cod_ult_lanc = req.headers.cod_ult_lanc;
-  const DB_User = 'admin'; // usuário do banco de dados
-  const DB_Pass = encodeURIComponent('admin'); // senha do usuário do banco de dados
-
-  mongoose.connect(`mongodb+srv://${DB_User}:${DB_Pass}@apicluster.pbksx7x.mongodb.net/?retryWrites=true&w=majority`);
-  
-  try {
-    const lancamentos = await LancamentoModel.find({ id_empresa: req.headers.id_empresa, Codigo: { $gt: cod_ult_lanc } }).sort({ codigo: 'asc' });
-
-    if (lancamentos.length > 0) {
-      res.status(200).json(lancamentos);
-    } else {
-      res.status(202).json({ message: 'Lançamentos ja estão atualizados' });
-    }
-  } catch (error) {
-    res.status(500).json({ message: 'Erro ao listar os lançamentos' + error });
-  }
-});
-
 
 module.exports = router;
