@@ -18,11 +18,11 @@ router.get('/', async (req, res) => {
     //verifica se o usuario ja existe cadastrado
     const empresaExistente = await Empresa.findOne({ token: empresa.token })
     if (empresaExistente) {
-      res.status(202).json({ message: 'usuario ja cadastrado com este token!' })
+      //res.status(202).json({ message: 'usuario ja cadastrado com este token!' })
     }
     else {
       await Empresa.create(empresa)
-      res.status(200).json({ message: 'empresa cadastrada com sucesso!' })
+      //res.status(200).json({ message: 'empresa cadastrada com sucesso!' })
     }
     try {
       const response = await axios.get('https://contaupcontabilidade.vendaerp.com.br/api/request/Lancamentos/GetAll', {
