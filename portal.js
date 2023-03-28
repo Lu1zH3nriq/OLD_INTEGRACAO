@@ -22,8 +22,9 @@ router.get('/', async (req, res) => {
       .catch((err) => console.log('Erro ao conectar: ' + err))
 
 
-    // Recebe os dados da empresa via header da request
+    // Recebe os dados da empresa via header da request e query
     const empresa = new Empresa(req.headers);
+    const pageSize = req.query.pageSize;
 
     // Verifica se os dados não estão vazios
     if (!empresa.user || !empresa.app || !empresa.token || !empresa.id_empresa) {
@@ -38,55 +39,59 @@ router.get('/', async (req, res) => {
     }
 
     // Faz a requisição da API do ERP
-    const response = await axios.get('https://contaupcontabilidade.vendaerp.com.br/api/request/Lancamentos/GetAll', {
-      headers: {
-        'Authorization-Token': empresaExistente.token,
-        'User': empresaExistente.user,
-        'App': empresaExistente.app,
-        'Content-Type': 'application/json',
+    let lancamentoExistente;
+    let pageSizeAux = pageSize;
+    do {
+      const response = await axios.get('https://contaupcontabilidade.vendaerp.com.br/api/request/Lancamentos/GetAll', {
+        params: {
+          pageSize: pageSizeAux,
+        },
+        headers: {
+          'Authorization-Token': empresaExistente.token,
+          'User': empresaExistente.user,
+          'App': empresaExistente.app,
+          'Content-Type': 'application/json',
+        }
+      });
+
+      const data = response.data;
+      const lancamentosParaSalvar = [];
+      
+      const jsonERP = [];
+
+      // Reorganiza o json retornado da api com data de alteração decrescente 
+      for (const lancamento of data) {
+        lancamento.UltimaAlteracao = new Date(lancamento.UltimaAlteracao);
+        jsonERP.push(lancamento);
       }
-    });
+      jsonERP.sort((a, b) => b.UltimaAlteracao - a.UltimaAlteracao);
 
-    if (response.status !== 200) {
-      return res.status(202).json({ message: 'Erro ao solicitar API do ERP' });
-    }
-
-    const data = response.data;
-    const lancamentosParaSalvar = [];
-    const lancamentosAtualizados = [];
-    const novosLancamentos = [];
-
-    // Interação sobre os lançamentos retornados pela API
-    for (const lancamento of data) {
-      const lancamentoExistente = await LancamentoModel.findOne({ Codigo: lancamento.Codigo });
-
-      if (!lancamentoExistente) {
-        // Se o lançamento não existe no banco de dados, adiciona na lista de lançamentos para salvar
-        const novoLancamento = { ...lancamento, id_empresa: empresaExistente.id_empresa };
-        lancamentosParaSalvar.push(novoLancamento);
-        novosLancamentos.push(novoLancamento);
-      } else {
-        // Se o lançamento já existe no banco de dados, verifica se a data da última alteração é diferente
-        if (lancamentoExistente.UltimaAlteracao !== lancamento.UltimaAlteracao) {
-          // Se a data for diferente, atualiza o lançamento existente
-          await LancamentoModel.updateOne({ Codigo: lancamento.Codigo }, { $set: { ...lancamento, id_empresa: empresaExistente.id_empresa } });
-          lancamentosAtualizados.push(lancamento);
+      for (const lanc of jsonERP) {
+        const lancamentoExiste = await LancamentoModel.findOne({ Codigo: lanc.Codigo })
+        if (!lancamentoExiste) {
+          lancamentosParaSalvar.push(lanc);
+        }
+        if (lancamentoExiste) {
+          lancamentoExistente = lancamentoExiste;
+          break;
         }
       }
-    }
+      
+      
+      LancamentoModel.insertMany(lancamentosParaSalvar)
 
-    // Insere os novos lançamentos no banco de dados
-    if (lancamentosParaSalvar.length > 0) {
-      await LancamentoModel.insertMany(lancamentosParaSalvar);
-    }
 
-    // Combinar os dois arrays e retornar a resposta
-    const lancamentosAtualizadosEInseridos = lancamentosAtualizados.concat(novosLancamentos);
-    return res.json(lancamentosAtualizadosEInseridos)
+      
+      // ERRO ESTÁ AQUI .........................................................
+      pageSizeAux = data.length;
+      pageSize += pageSizeAux;
+    } while (!lancamentoExistente);
 
+
+    res.status(200).json({message: 'deu certo'})
 
   } catch (error) {
-    return res.status(500).json({ message: 'Erro ao solicitar atualização de lançamentos' });
+    return res.status(500).json({ message: 'Erro ao atualizar lançamentos' });
   }
 
   mongoose.disconnect();

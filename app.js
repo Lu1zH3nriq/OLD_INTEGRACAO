@@ -1,10 +1,9 @@
 //importações
 const express = require('express')
 const mongoose = require('mongoose')
-//const Usuario = require('./models/Usuario')
 const app = express()
 const portal = require('./portal')
-//const erpFunction = require('./erp')
+
 
 
 //fazer o app ler arquivos json
@@ -19,7 +18,7 @@ app.get('/', portal)
 
 
 
-//-----------------------------------Comentários-----------------------------------------------------
+//-----------------------------------Comentários-------------------------------------------------------------------
 /*
 
 
