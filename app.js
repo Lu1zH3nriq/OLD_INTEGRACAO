@@ -3,7 +3,7 @@ const express = require('express')
 const mongoose = require('mongoose')
 const app = express()
 const portal = require('./portal')
-
+require('./db')
 
 
 //fazer o app ler arquivos json

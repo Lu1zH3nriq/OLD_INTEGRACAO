@@ -22,7 +22,7 @@ const ParcelaLancamento = new mongoose.Schema({
 const Lancamento = new mongoose.Schema({
   id_empresa: String,
   Codigo: Number,
-  UltimaAlteracao: String,
+  UltimaAlteracao: Date,
   DataCompetencia: String,
   DataVencimento: String,
   DataVencimentoOriginal: String,

@@ -11,17 +11,6 @@ const mongoose = require('mongoose');
 
 router.get('/', async (req, res) => {
   try {
-    //-----------------------CONEXAO COM O BANCO DE DADOS MONGODB----------------------------------------
-    //entregar uma porta para o servidor e conectar ao banco de dados
-    const DB_User = 'admin' //usuario do banco de dados
-    const DB_Pass = encodeURIComponent('admin') //senha do usuario do banco de dados
-    mongoose.connect(`mongodb+srv://${DB_User}:${DB_Pass}@apicluster.pbksx7x.mongodb.net/?retryWrites=true&w=majority`)
-      .then(() => {
-        console.log('Conectado!')
-      })
-      .catch((err) => console.log('Erro ao conectar: ' + err))
-
-
     // Recebe os dados da empresa via header da request e query
     const empresa = new Empresa(req.headers);
     const pageSize = req.query.pageSize;
@@ -40,11 +29,12 @@ router.get('/', async (req, res) => {
 
     // Faz a requisição da API do ERP
     let lancamentoExistente;
-    let pageSizeAux = pageSize;
+    let skip = 0;
     do {
       const response = await axios.get('https://contaupcontabilidade.vendaerp.com.br/api/request/Lancamentos/GetAll', {
         params: {
-          pageSize: pageSizeAux,
+          pageSize: pageSize,
+          skip: skip,
         },
         headers: {
           'Authorization-Token': empresaExistente.token,
@@ -64,37 +54,41 @@ router.get('/', async (req, res) => {
         lancamento.UltimaAlteracao = new Date(lancamento.UltimaAlteracao);
         jsonERP.push(lancamento);
       }
-      jsonERP.sort((a, b) => b.UltimaAlteracao - a.UltimaAlteracao);
+      jsonERP.sort((a, b) => b.UltimaAlteracao.getTime() - a.UltimaAlteracao.getTime());
+      //jsonERP.sort((a, b) => b.UltimaAlteracao - a.UltimaAlteracao);
 
+      //verifica cada lancamento dentro do json se ja existe no banco de dados
       for (const lanc of jsonERP) {
         const lancamentoExiste = await LancamentoModel.findOne({ Codigo: lanc.Codigo })
+
+        // se nao encontrar, cria os novos lancamentos
         if (!lancamentoExiste) {
           lancamentosParaSalvar.push(lanc);
         }
+
+        // se ecnontrar termina a execução, ou seja, o restante ja está no banco
         if (lancamentoExiste) {
           lancamentoExistente = lancamentoExiste;
           break;
         }
       }
-      
-      
-      LancamentoModel.insertMany(lancamentosParaSalvar)
 
+      //salva os novos lancamentos no banco de dados
 
-      
-      // ERRO ESTÁ AQUI .........................................................
-      pageSizeAux = data.length;
-      pageSize += pageSizeAux;
-    } while (!lancamentoExistente);
+      LancamentoModel.insertMany(lancamentosParaSalvar.sort((a, b) => b.UltimaAlteracao.getTime() - a.UltimaAlteracao.getTime()))
 
+      //pula para a proxima pagina com novos lancamentos do erp
+      skip = skip + pageSize;
 
+    } while (!lancamentoExistente); //repete até achar um lancamento que ja esteja no banco
+    // retorna que deu certo para o client
     res.status(200).json({message: 'deu certo'})
-
   } catch (error) {
+    console.error(error);
     return res.status(500).json({ message: 'Erro ao atualizar lançamentos' });
   }
 
-  mongoose.disconnect();
+  
 });
 
 
