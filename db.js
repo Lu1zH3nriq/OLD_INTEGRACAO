@@ -8,4 +8,5 @@ mongoose.connect(`mongodb+srv://${DB_User}:${DB_Pass}@apicluster.pbksx7x.mongodb
     .then(() => {
         console.log('Conectado!')
     })
-    .catch((err) => console.log('Erro ao conectar: ' + err))
+    .catch((err) => console.log('Erro ao conectar: ' + err)
+)
