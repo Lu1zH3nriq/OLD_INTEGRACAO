@@ -5,6 +5,7 @@ const Empresa = mongoose.model('Empresa', {
     app: String,
     token: String,
     id_empresa: String,
+    UltimaConsulta: String,
 })
 
 module.exports = Empresa

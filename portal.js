@@ -1,16 +1,14 @@
 const router = require("express").Router();
 const LancamentoModel = require("./models/LancamentoModel");
-const Empresa = require("./models/EmpresaModel");
+const EmpresaModel = require("./models/EmpresaModel");
 const axios = require("axios");
-const mongoose = require("mongoose");
 
 //------------------------------------rota portal para o erp -----------------------------------
 
 router.get("/", async (req, res) => {
   try {
     // Recebe os dados da empresa via header da request e query
-    const empresa = new Empresa(req.headers);
-    const pageSize = req.query.pageSize;
+    const empresa = new EmpresaModel(req.headers);
 
     // Verifica se os dados não estão vazios
     if (
@@ -23,23 +21,26 @@ router.get("/", async (req, res) => {
     }
 
     // Verifica se a empresa já existe cadastrada
-    const empresaExistente = await Empresa.findOne({ token: empresa.token });
+    const empresaExistente = await EmpresaModel.findOne({
+      token: empresa.token,
+    });
     if (!empresaExistente) {
       // Caso não exista, cadastra a empresa no banco de dados
-      empresaExistente = await Empresa.create(empresa);
+      empresaExistente = await EmpresaModel.create(empresa);
+    }
+
+    let dateTime = empresaExistente.UltimaConsulta;
+    if (!dateTime) {
+      dateTime = "2000-01-01T00:00:01.001-03:00";
     }
 
     // Faz a requisição da API do ERP
-    let lancamentoExistente = {};
-    let skip = 0;
-
-    do {
+    try {
       const response = await axios.get(
-        "https://contaupcontabilidade.vendaerp.com.br/api/request/Lancamentos/GetAll",
+        "https://contaupcontabilidade.vendaerp.com.br/api/request/Lancamentos/Pesquisar",
         {
           params: {
-            pageSize: pageSize,
-            skip: skip,
+            alteradoApos: dateTime,
           },
           headers: {
             "Authorization-Token": empresaExistente.token,
@@ -54,46 +55,56 @@ router.get("/", async (req, res) => {
       const lancamentosParaSalvar = [];
       const jsonERP = [];
 
-      // Reorganiza o json retornado da api com data de alteração decrescente
-      for (const lancamento of data) {
-        lancamento.UltimaAlteracao = new Date(lancamento.UltimaAlteracao);
-        jsonERP.push(lancamento);
+      // reorganizar o json retornado da API por data de UltimaAltercao
+      for(const lanc of data){
+        lanc.UltimaAlteracao = new Date(lanc.UltimaAlteracao);
+        jsonERP.push(lanc);
       }
-      jsonERP.sort(
-        (a, b) => b.UltimaAlteracao.getTime() - a.UltimaAlteracao.getTime()
-      );
+       jsonERP.sort((a, b) => b.UltimaAlteracao - a.UltimaAlteracao);
 
-      //verifica cada lancamento dentro do json se ja existe no banco de dados
-      for (const lanc of jsonERP) {
+      
+      //ultima consulta passa a ser a data do lancamento mais atual
+      await EmpresaModel.updateOne({
+        UltimaConsulta: jsonERP[0].UltimaAlteracao,
+      });
+
+      //verifica cada lancamento dentro do data se ja existe no banco de dados
+      for (const lancamento of jsonERP) {
         const lancamentoExiste = await LancamentoModel.findOne({
-          Codigo: lanc.Codigo,
+          Codigo: lancamento.Codigo,
         });
-
-        // se nao encontrar, cria os novos lancamentos
+        //se nao existir adiciona na lista para salvar no banco de dados
         if (!lancamentoExiste) {
-          lancamentosParaSalvar.push(lanc);
+          lancamentosParaSalvar.push(lancamento);
+        } else {
+          //se existir e a ultima alteracao for diferente, altera o lancamento no banco de dados
+          if (lancamentoExiste.UltimaAlteracao !== lancamento.UltimaAlteracao) {
+            await LancamentoModel.updateOne(
+              { Codigo: lancamento.Codigo },
+              lancamento
+            );
+          }
         }
-
-        // se ecnontrar termina a execução, ou seja, o restante ja está no banco
-        else {
-          lancamentoExistente = lancamentoExiste;
-          break;
-        }
-
-        LancamentoModel.insertMany(lancamentosParaSalvar);
       }
-      //pula para a proxima pagina com novos lancamentos do erp
-      skip = skip + pageSize;
 
-    } while (!lancamentoExistente); //repete até achar um lancamento que ja esteja no banco
+      //salva os novos lancamentos atualizados
+      if (lancamentosParaSalvar.length > 0) {
+        await LancamentoModel.create(lancamentosParaSalvar);
+      }
 
-    // retorna que deu certo para o client
-    res.status(200).json({ message: "Deu certo" });
+      res.status(200).json(jsonERP);
 
-
+      
+    } catch (error) {
+      res
+        .status(404)
+        .json({ message: "Erro ao requisitar API do ERP  :" + error });
+    }
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ message: "Erro ao atualizar lançamentos" });
+    return res
+      .status(500)
+      .json({ message: "Erro ao atualizar lançamentos" + error });
   }
 });
 
