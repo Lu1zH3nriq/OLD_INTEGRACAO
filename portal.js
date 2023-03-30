@@ -21,7 +21,7 @@ router.get("/", async (req, res) => {
     }
 
     // Verifica se a empresa já existe cadastrada
-    const empresaExistente = await EmpresaModel.findOne({
+    let empresaExistente = await EmpresaModel.findOne({
       token: empresa.token,
     });
     if (!empresaExistente) {
@@ -89,10 +89,11 @@ router.get("/", async (req, res) => {
 
       //salva os novos lancamentos atualizados
       if (lancamentosParaSalvar.length > 0) {
+        lancamentosParaSalvar.sort((a, b) =>b.UltimaAlteracao - a.UltimaAlteracao);
         await LancamentoModel.create(lancamentosParaSalvar);
       }
 
-      res.status(200).json(jsonERP);
+      res.status(200).json(lancamentosParaSalvar);
 
       
     } catch (error) {
