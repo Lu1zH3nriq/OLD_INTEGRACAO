@@ -16,6 +16,7 @@ app.listen(3000);
 // ------------------------------CHAMA ROTA DO PORTAL----------------------------------------------------------------
 
 app.get('/', portal)
+app.get('/consulta', portal)
 
 
 

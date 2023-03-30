@@ -72,6 +72,7 @@ router.get("/", async (req, res) => {
 
       //verifica cada lancamento dentro do data se ja existe no banco de dados
       for (const lancamento of jsonERP) {
+        lancamento.id_empresa = empresa.id_empresa;
         const lancamentoExiste = await LancamentoModel.findOne({
           Codigo: lancamento.Codigo,
         });
@@ -105,4 +106,20 @@ router.get("/", async (req, res) => {
   }
 });
 
+
+
+router.get("/consulta", async (req, res) => {
+  const id_empresa = req.headers.id_empresa;
+  console.log(`Consultando lancamentos para id_empresa ${id_empresa}`);
+
+  try {
+    const lancamentosDoMongo = await LancamentoModel.find({id_empresa: id_empresa});
+
+    console.log(`Encontrados ${lancamentosDoMongo.length} lancamentos`);
+    res.status(200).json(lancamentosDoMongo);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: 'erro ao buscar lancamentos'});
+  }
+});
 module.exports = router;
