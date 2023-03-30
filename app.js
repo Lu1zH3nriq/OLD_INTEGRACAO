@@ -4,7 +4,7 @@ const mongoose = require('mongoose')
 const app = express()
 const portal = require('./portal')
 require('./db')
-
+require('dotenv').config()
 
 //fazer o app ler arquivos json
 app.use(express.urlencoded({ extended: true }))

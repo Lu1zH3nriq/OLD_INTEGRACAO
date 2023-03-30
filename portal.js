@@ -7,6 +7,9 @@ const axios = require("axios");
 
 router.get("/", async (req, res) => {
   try {
+    if (req.headers['authorization'] !== process.env.TOKEN_DE_ACESSO)
+      return res.status(401).send()
+
     // Recebe os dados da empresa via header da request e query
     const empresa = new EmpresaModel(req.headers);
 
@@ -30,9 +33,9 @@ router.get("/", async (req, res) => {
     }
 
     let dateTime = empresaExistente.UltimaConsulta;
-    if (!dateTime) {
-      dateTime = "2000-01-01T00:00:01.001-03:00";
-    }
+    // if (!dateTime) {
+    //   dateTime = "2000-01-01T00:00:01.001-03:00";
+    // }
 
     // Faz a requisição da API do ERP
     try {
@@ -49,24 +52,25 @@ router.get("/", async (req, res) => {
             "Content-Type": "application/json",
           },
         }
-      );
+      );console.log(response.data)
 
-      const data = response.data;
-      const lancamentosParaSalvar = [];
-      const jsonERP = [];
+      const jsonERP = response.data;
 
       // reorganizar o json retornado da API por data de UltimaAltercao
-      for(const lanc of data){
-        lanc.UltimaAlteracao = new Date(lanc.UltimaAlteracao);
-        jsonERP.push(lanc);
-      }
-       jsonERP.sort((a, b) => b.UltimaAlteracao - a.UltimaAlteracao);
+      jsonERP.sort((a, b) => new Date(b.UltimaAlteracao) - new Date(a.UltimaAlteracao));
 
+      // Interromper execução se não houver nenhum novo lançamento
+      if (jsonERP.length === 0)
+        return res.status(204).send();
       
       //ultima consulta passa a ser a data do lancamento mais atual
+      const ultimaConsulta = new Date(jsonERP[0].UltimaAlteracao)
+      ultimaConsulta.setMilliseconds(ultimaConsulta.getMilliseconds() + 1)
       await EmpresaModel.updateOne({
-        UltimaConsulta: jsonERP[0].UltimaAlteracao,
+        UltimaConsulta: ultimaConsulta.toISOString(),
       });
+
+      const lancamentosParaSalvar = [];
 
       //verifica cada lancamento dentro do data se ja existe no banco de dados
       for (const lancamento of jsonERP) {
@@ -74,31 +78,25 @@ router.get("/", async (req, res) => {
           Codigo: lancamento.Codigo,
         });
         //se nao existir adiciona na lista para salvar no banco de dados
-        if (!lancamentoExiste) {
-          lancamentosParaSalvar.push(lancamento);
-        } else {
+        if (lancamentoExiste) {
           //se existir e a ultima alteracao for diferente, altera o lancamento no banco de dados
-          if (lancamentoExiste.UltimaAlteracao !== lancamento.UltimaAlteracao) {
-            await LancamentoModel.updateOne(
-              { Codigo: lancamento.Codigo },
-              lancamento
-            );
-          }
+          await LancamentoModel.updateOne(
+            { Codigo: lancamento.Codigo },
+            lancamento
+          );
+        } else {
+          // salva o novo lancamento
+          lancamentosParaSalvar.push(await LancamentoModel.create(lancamento));
         }
-      }
-
-      //salva os novos lancamentos atualizados
-      if (lancamentosParaSalvar.length > 0) {
-        lancamentosParaSalvar.sort((a, b) =>b.UltimaAlteracao - a.UltimaAlteracao);
-        await LancamentoModel.create(lancamentosParaSalvar);
       }
 
       res.status(200).json(lancamentosParaSalvar);
 
       
     } catch (error) {
+      console.error(error);
       res
-        .status(404)
+        .status(500)
         .json({ message: "Erro ao requisitar API do ERP  :" + error });
     }
   } catch (error) {
