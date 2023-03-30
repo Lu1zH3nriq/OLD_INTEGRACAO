@@ -8,7 +8,7 @@ const axios = require("axios");
 router.get("/", async (req, res) => {
   try {
     if (req.headers['authorization'] !== process.env.TOKEN_DE_ACESSO)
-      return res.status(401).json({message: 'Acesso não autorizado!'})
+      return res.status(401).send()
 
     // Recebe os dados da empresa via header da request e query
     const empresa = new EmpresaModel(req.headers);
@@ -20,7 +20,7 @@ router.get("/", async (req, res) => {
       !empresa.token ||
       !empresa.id_empresa
     ) {
-      return res.status(202).json({ message: "Existe algum campo vazio!" });
+      return res.status(202).json({ message: "Verificação do cadastro da empresa com dados do ERO incompletos!" });
     }
 
     // Verifica se a empresa já existe cadastrada
@@ -59,7 +59,7 @@ router.get("/", async (req, res) => {
 
       // Interromper execução se não houver nenhum novo lançamento
       if (jsonERP.length === 0)
-        return res.status(204).json({message: 'Lista de lançamentos já atualizada!'})
+        return res.status(204).send();
       
       //ultima consulta passa a ser a data do lancamento mais atual
       const ultimaConsulta = new Date(jsonERP[0].UltimaAlteracao)
@@ -89,7 +89,7 @@ router.get("/", async (req, res) => {
       }
 
       //res.status(200).json(lancamentosParaSalvar);
-      res.status(200).json({message : 'Lançamentos atualizados com sucesso!'});
+      res.status(200).json({message : 'Lancamentos atualizados com sucesso!'});
       
     } catch (error) {
       console.error(error);
