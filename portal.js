@@ -33,9 +33,7 @@ router.get("/", async (req, res) => {
     }
 
     let dateTime = empresaExistente.UltimaConsulta;
-    // if (!dateTime) {
-    //   dateTime = "2000-01-01T00:00:01.001-03:00";
-    // }
+    
 
     // Faz a requisição da API do ERP
     try {
@@ -52,7 +50,7 @@ router.get("/", async (req, res) => {
             "Content-Type": "application/json",
           },
         }
-      );console.log(response.data)
+      );//console.log(response.data)
 
       const jsonERP = response.data;
 
@@ -90,20 +88,20 @@ router.get("/", async (req, res) => {
         }
       }
 
-      res.status(200).json(lancamentosParaSalvar);
-
+      //res.status(200).json(lancamentosParaSalvar);
+      res.status(200).json({message : 'Lancamentos atualizados com sucesso!'});
       
     } catch (error) {
       console.error(error);
       res
         .status(500)
-        .json({ message: "Erro ao requisitar API do ERP  :" + error });
+        .json({ message: "Erro ao requisitar API do ERP "});
     }
   } catch (error) {
     console.error(error);
     return res
       .status(500)
-      .json({ message: "Erro ao atualizar lançamentos" + error });
+      .json({ message: "Erro ao atualizar lançamentos "});
   }
 });
 
