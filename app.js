@@ -18,6 +18,7 @@ app.listen(3000);
 app.get('/', portal)
 app.get('/consulta', portal)
 app.get('/consultaMongo', portal)
+app.get('/totalLancamentos', portal)
 
 
 

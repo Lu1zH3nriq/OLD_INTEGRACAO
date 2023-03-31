@@ -5,7 +5,7 @@ const axios = require("axios");
 
 //------------------------------------rota portal para o erp -----------------------------------
 
-router.get("/", async (req, res) => {
+router.get("/buscaERP", async (req, res) => {
   try {
     if (req.headers["authorization"] !== process.env.TOKEN_DE_ACESSO)
       return res.status(401).send();
@@ -106,29 +106,8 @@ router.get("/", async (req, res) => {
   }
 });
 
-router.get("/consulta", async (req, res) => {
-  const id_empresa = req.headers.id_empresa;
-  console.log(`Consultando lancamentos para id_empresa ${id_empresa}`);
 
-  try {
-    const lancamentosDoMongo = await LancamentoModel.find({
-      id_empresa: id_empresa,
-    });
-
-    console.log(`Encontrados ${lancamentosDoMongo.length} lancamentos`);
-    res.status(200).json(lancamentosDoMongo);
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: "erro ao buscar lancamentos" });
-  }
-});
-module.exports = router;
-
-
-
-
-
-router.get("/consultaMongo", async (req, res) => {
+router.get("/buscaLancamentos", async (req, res) => {
   try {
     // recebe parametros da requisicao
     const id_empresa = req.headers.id_empresa;
@@ -162,3 +141,30 @@ router.get("/consultaMongo", async (req, res) => {
     res.status(500).json({ message: "erro ao buscar lancamentos" });
   }
 });
+
+
+  router.get('/totalLancamentos', async (req, res) => {
+    try {
+      const id_empresa = req.headers.id_empresa;
+      const plano_de_conta = req.query.plano_de_conta;
+      let resultado;
+
+      if (plano_de_conta) {
+        resultado = await LancamentoModel.aggregate([
+          { $match: { id_empresa, plano_de_conta } },
+          { $group: { _id: '$PlanoDeConta', total: { $sum: '$Valor' } } },
+        ]).exec();
+      } else {
+        resultado = await LancamentoModel.aggregate([
+          { $match: { id_empresa } },
+          { $group: { _id: '$PlanoDeConta', total: { $sum: '$Valor' } } },
+        ]).exec();
+      }
+
+      return res.status(200).json({resultado: resultado });
+    } catch (err) {
+      return res.status(500).json({ message: 'erro: ' + err });
+    }
+  })
+
+module.exports = router;
