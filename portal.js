@@ -24,7 +24,7 @@ router.get("/buscaERP", async (req, res) => {
         .status(202)
         .json({
           message:
-            "Verificação do cadastro da empresa com dados do ERO incompletos!",
+            "Verificação do cadastro da empresa com dados do ERP incompletos!",
         });
     }
 

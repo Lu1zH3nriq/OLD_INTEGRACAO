@@ -15,9 +15,8 @@ app.listen(3000);
 
 // ------------------------------CHAMA ROTA DO PORTAL----------------------------------------------------------------
 
-app.get('/', portal)
-app.get('/consulta', portal)
-app.get('/consultaMongo', portal)
+app.get('/buscaERP', portal)
+app.get('/buscaLancamentos', portal)
 app.get('/totalLancamentos', portal)
 
 
