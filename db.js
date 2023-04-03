@@ -4,8 +4,9 @@ require("dotenv").config();
 //entregar uma porta para o servidor e conectar ao banco de dados
 //const DB_User = process.env.USER_DB //usuario do banco de dados
 //const DB_Pass = process.env.PASSWORD_DB //senha do usuario do banco de dados
+const DB_LOCAL = process.env.DB_LOCAL //senha do usuario do banco de dados
 mongoose
-  .connect("mongodb://127.0.0.1:27017/integracao_portal_erp")
+  .connect(DB_LOCAL)
   .then(() => {
     console.log("Conectado!");
   })
